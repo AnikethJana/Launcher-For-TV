@@ -54,6 +54,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import android.net.Uri
+import android.widget.Toast
 import com.example.ui.theme.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -557,6 +559,7 @@ fun rememberCurrentTimeAndDate(
 @Composable
 fun MinimalistTopClock(
     viewModel: FireAppsViewModel,
+    isFocusable: Boolean = true,
     onClockClick: () -> Unit
 ) {
     val useSystemTime by viewModel.useSystemTime.collectAsState()
@@ -574,8 +577,8 @@ fun MinimalistTopClock(
     Column(
         modifier = Modifier
             .onFocusChanged { isFocused = it.isFocused }
-            .focusable()
-            .clickable { onClockClick() }
+            .focusable(enabled = isFocusable)
+            .clickable(enabled = isFocusable) { onClockClick() }
             .border(
                 width = if (isFocused) 1.5.dp else 1.dp,
                 color = if (isFocused) Color.White else Color(0x1FFFFFFF),
@@ -626,6 +629,14 @@ fun CalendarTimeCustomizerOverlay(
     val is24h by viewModel.timeFormat24h.collectAsState()
 
     var fields by remember { mutableStateOf(viewModel.getCalendarFields()) }
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        // Automatically request focus on TV remote open to prevent background scrolling
+        try {
+            focusRequester.requestFocus()
+        } catch (e: Exception) {}
+    }
 
     LaunchedEffect(useSystemTime) {
         if (useSystemTime) {
@@ -690,6 +701,7 @@ fun CalendarTimeCustomizerOverlay(
                     IconButton(
                         onClick = onClose,
                         modifier = Modifier
+                            .focusRequester(focusRequester)
                             .onFocusChanged { isCloseFocused = it.isFocused }
                             .background(
                                 color = if (isCloseFocused) Color(0x33FFFFFF) else Color.Transparent,
@@ -926,6 +938,28 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
     val selectedApp by viewModel.selectedApp.collectAsState()
     val isStreamingActive by viewModel.isStreamingFeedActive.collectAsState()
 
+    var isDeveloperInfoOpen by remember { mutableStateOf(false) }
+    var isCustomizerOpen by remember { mutableStateOf(false) }
+
+    // Direct app launching logic with 1-click fallback
+    val launchAppDirectly = { app: AppItem ->
+        if (app.isSystem) {
+            if (app.launchIntent != null) {
+                try {
+                    context.startActivity(app.launchIntent)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Could not launch ${app.name}", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(context, "Launch intent not available for ${app.name}", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            // For curated digital stream/channels, open the immersive CinemaFeedPlayer simulation
+            viewModel.selectApp(app)
+            viewModel.setStreamingFeed(true)
+        }
+    }
+
     // Filter applications dynamically
     val filteredCurated = remember(searchQuery, selectedTab) {
         CuratedApps.filter {
@@ -965,8 +999,6 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
     val focusedBannerItem = remember(selectedApp, filteredCurated) {
         selectedApp ?: filteredCurated.firstOrNull() ?: CuratedApps.first()
     }
-
-    var isCustomizerOpen by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -1016,8 +1048,42 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
                                 letterSpacing = (-0.5).sp
                             )
                         }
-                        MinimalistTopClock(viewModel = viewModel) {
-                            isCustomizerOpen = true
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // Sleek information launcher info button
+                            var isInfoFocused by remember { mutableStateOf(false) }
+                            IconButton(
+                                onClick = { isDeveloperInfoOpen = true },
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .onFocusChanged { isInfoFocused = it.isFocused }
+                                    .focusable(enabled = !isCustomizerOpen && !isDeveloperInfoOpen)
+                                    .border(
+                                        width = if (isInfoFocused) 1.5.dp else 1.dp,
+                                        color = if (isInfoFocused) Color.White else Color(0x1FFFFFFF),
+                                        shape = CircleShape
+                                    )
+                                    .background(
+                                        color = if (isInfoFocused) Color(0x11FFFFFF) else Color(0x05FFFFFF),
+                                        shape = CircleShape
+                                    )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = "Developer Info",
+                                    tint = if (isInfoFocused) Color.White else FireOrangePrimary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+
+                            MinimalistTopClock(
+                                viewModel = viewModel,
+                                isFocusable = !isCustomizerOpen && !isDeveloperInfoOpen
+                            ) {
+                                isCustomizerOpen = true
+                            }
                         }
                     }
                 }
@@ -1026,7 +1092,8 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
                 item {
                     SearchSection(
                         query = searchQuery,
-                        onQueryChange = { viewModel.updateSearchQuery(it) }
+                        onQueryChange = { viewModel.updateSearchQuery(it) },
+                        isFocusable = !isCustomizerOpen && !isDeveloperInfoOpen
                     )
                 }
 
@@ -1034,7 +1101,8 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
                 item {
                     CategoryRow(
                         selectedTab = selectedTab,
-                        onTabSelected = { viewModel.selectTab(it) }
+                        onTabSelected = { viewModel.selectTab(it) },
+                        isFocusable = !isCustomizerOpen && !isDeveloperInfoOpen
                     )
                 }
 
@@ -1055,7 +1123,8 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
                             title = "YOUR QUICK ACCESS SHORTCUTS",
                             apps = filteredPinned,
                             favorites = favorites,
-                            onAppClick = { viewModel.selectApp(it) }
+                            onAppClick = { launchAppDirectly(it) },
+                            isFocusable = !isCustomizerOpen && !isDeveloperInfoOpen
                         )
                     }
                 }
@@ -1079,7 +1148,8 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
                                     title = categoryDisplayNames[cat] ?: "${cat.uppercase()} APPS",
                                     apps = appsInCat,
                                     favorites = favorites,
-                                    onAppClick = { viewModel.selectApp(it) }
+                                    onAppClick = { launchAppDirectly(it) },
+                                    isFocusable = !isCustomizerOpen && !isDeveloperInfoOpen
                                 )
                             }
                         }
@@ -1094,41 +1164,13 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
                                     title = "${cat.uppercase()} APPS",
                                     apps = appsInCat,
                                     favorites = favorites,
-                                    onAppClick = { viewModel.selectApp(it) }
+                                    onAppClick = { launchAppDirectly(it) },
+                                    isFocusable = !isCustomizerOpen && !isDeveloperInfoOpen
                                 )
                             }
                         }
                     }
                 }
-            }
-        }
-
-        // FULL SCREEN COMPONENT: DETAIL MODAL DIALOG SHEET
-        AnimatedVisibility(
-            visible = selectedApp != null && !isStreamingActive,
-            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
-            exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
-        ) {
-            selectedApp?.let { app ->
-                AppDetailOverlay(
-                    app = app,
-                    isFavorited = favorites.contains(if (app.isSystem) app.packageName else app.id),
-                    onToggleFavorite = {
-                        viewModel.toggleFavorite(if (app.isSystem) app.packageName else app.id)
-                    },
-                    onLaunch = {
-                        if (app.isSystem && app.launchIntent != null) {
-                            try {
-                                context.startActivity(app.launchIntent)
-                            } catch (e: Exception) {
-                                // Fallback
-                            }
-                        } else {
-                            viewModel.setStreamingFeed(true)
-                        }
-                    },
-                    onClose = { viewModel.selectApp(null) }
-                )
             }
         }
 
@@ -1141,7 +1183,10 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
             selectedApp?.let { app ->
                 CinemaFeedPlayer(
                     app = app,
-                    onClose = { viewModel.setStreamingFeed(false) }
+                    onClose = {
+                        viewModel.setStreamingFeed(false)
+                        viewModel.selectApp(null)
+                    }
                 )
             }
         }
@@ -1149,6 +1194,166 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
         if (isCustomizerOpen) {
             CalendarTimeCustomizerOverlay(viewModel = viewModel) {
                 isCustomizerOpen = false
+            }
+        }
+
+        if (isDeveloperInfoOpen) {
+            DeveloperInfoOverlay {
+                isDeveloperInfoOpen = false
+            }
+        }
+    }
+}
+
+// VAIBHAV DEVELOPER INFO DIALOG OVERLAY (FULLY DPAD FRIENDLY)
+@Composable
+fun DeveloperInfoOverlay(
+    onClose: () -> Unit
+) {
+    val context = LocalContext.current
+    var isCloseFocused by remember { mutableStateOf(false) }
+    var isTelegramFocused by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        // Automatically request D-pad focus on TV remote open to prevent D-pad background leak
+        try {
+            focusRequester.requestFocus()
+        } catch (e: Exception) {}
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.85f))
+            .clickable(enabled = true) { /* Intercept back click backdrop */ }
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF101416)),
+            border = BorderStroke(1.5.dp, FireOrangePrimary.copy(alpha = 0.6f)),
+            modifier = Modifier
+                .widthIn(max = 400.dp)
+                .fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .background(Color(0x1BFF6400), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        tint = FireOrangePrimary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+
+                Text(
+                    text = "Launcher Info",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = "This dashboard launcher is completely optimized and styled for Android TV systems, providing direct application execution with high-contrast active icons highlighting.",
+                    color = FireTextSecondary,
+                    fontSize = 11.sp,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 15.sp
+                )
+
+                HorizontalDivider(color = Color(0x33FFFFFF), thickness = 1.dp)
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "DEVELOPED BY",
+                        color = FireOrangePrimary,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        text = "Vaibhav",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "TELEGRAM CHANNEL / SUPPORT",
+                        color = FireTextSecondary,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "t.me/BlackDex",
+                        color = FireAmberAccent,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .onFocusChanged { isTelegramFocused = it.isFocused }
+                            .focusable()
+                            .border(
+                                width = if (isTelegramFocused) 2.dp else 1.dp,
+                                color = if (isTelegramFocused) Color.White else FireOrangePrimary.copy(alpha = 0.3f),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .background(
+                                color = if (isTelegramFocused) Color(0x22FFFFFF) else Color.Transparent,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .clickable {
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/BlackDex"))
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "t.me/BlackDex", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Button(
+                    onClick = onClose,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester)
+                        .onFocusChanged { isCloseFocused = it.isFocused }
+                        .border(
+                            width = if (isCloseFocused) 2.dp else 0.dp,
+                            color = Color.White,
+                            shape = RoundedCornerShape(100.dp)
+                        ),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isCloseFocused) Color.White else FireOrangePrimary,
+                        contentColor = Color.Black
+                    )
+                ) {
+                    Text("Dismiss", fontWeight = FontWeight.Black, fontSize = 13.sp)
+                }
             }
         }
     }
@@ -1296,7 +1501,7 @@ fun CinemaBillboard(appItem: AppItem, onClick: () -> Unit) {
 
 // INPUT SEARCH ROW WITH DOUBLE-CLICK TO ACTIVATE TYPE SEARCH ON ANDROID TV
 @Composable
-fun SearchSection(query: String, onQueryChange: (String) -> Unit) {
+fun SearchSection(query: String, onQueryChange: (String) -> Unit, isFocusable: Boolean = true) {
     var isEditing by remember { mutableStateOf(false) }
     var lastClickTime by remember { mutableStateOf(0L) }
     val focusRequester = remember { FocusRequester() }
@@ -1320,8 +1525,8 @@ fun SearchSection(query: String, onQueryChange: (String) -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { isBoxFocused = it.isFocused }
-                    .focusable()
-                    .clickable {
+                    .focusable(enabled = isFocusable)
+                    .clickable(enabled = isFocusable) {
                         val now = System.currentTimeMillis()
                         if (now - lastClickTime < 800) {
                             isEditing = true
@@ -1435,7 +1640,7 @@ fun SearchSection(query: String, onQueryChange: (String) -> Unit) {
 
 // HORIZONTAL CATEGORIES WITH HIGH VISIBILITY TV D-PAD FOCUS
 @Composable
-fun CategoryRow(selectedTab: String, onTabSelected: (String) -> Unit) {
+fun CategoryRow(selectedTab: String, onTabSelected: (String) -> Unit, isFocusable: Boolean = true) {
     val tabs = listOf("All Apps", "Device Applications", "Favorites Hub")
 
     LazyRow(
@@ -1458,7 +1663,7 @@ fun CategoryRow(selectedTab: String, onTabSelected: (String) -> Unit) {
                         scaleY = scale
                     }
                     .onFocusChanged { isFocused = it.isFocused }
-                    .focusable()
+                    .focusable(enabled = isFocusable)
                     .clip(RoundedCornerShape(20.dp))
                     .border(
                         width = if (isFocused) 2.dp else 1.dp,
@@ -1468,7 +1673,7 @@ fun CategoryRow(selectedTab: String, onTabSelected: (String) -> Unit) {
                     .background(
                         color = if (isFocused) Color(0x2BFFFFFF) else if (isSelected) Color(0x1AFF6400) else Color.Transparent
                     )
-                    .clickable { onTabSelected(tab) }
+                    .clickable(enabled = isFocusable) { onTabSelected(tab) }
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1502,7 +1707,8 @@ fun AppHorizontalGroup(
     title: String,
     apps: List<AppItem>,
     favorites: Set<String>,
-    onAppClick: (AppItem) -> Unit
+    onAppClick: (AppItem) -> Unit,
+    isFocusable: Boolean = true
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -1541,7 +1747,8 @@ fun AppHorizontalGroup(
                 AppCircularHubCard(
                     appItem = app,
                     isPinned = isPinned,
-                    onClick = { onAppClick(app) }
+                    onClick = { onAppClick(app) },
+                    isFocusable = isFocusable
                 )
             }
         }
@@ -1553,7 +1760,8 @@ fun AppHorizontalGroup(
 fun AppCircularHubCard(
     appItem: AppItem,
     isPinned: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isFocusable: Boolean = true
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(targetValue = if (isFocused) 1.15f else 1.0f, animationSpec = spring())
@@ -1563,8 +1771,8 @@ fun AppCircularHubCard(
         modifier = Modifier
             .width(96.dp)
             .onFocusChanged { isFocused = it.isFocused }
-            .focusable()
-            .clickable { onClick() }
+            .focusable(enabled = isFocusable)
+            .clickable(enabled = isFocusable) { onClick() }
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -1595,12 +1803,12 @@ fun AppCircularHubCard(
                 modifier = Modifier
                     .size(68.dp)
                     .background(
-                        color = if (isFocused) Color.White else Color(0xFF141A24),
+                        color = if (isFocused) Color(0xFF243042) else Color(0xFF141A24),
                         shape = CircleShape
                     )
                     .border(
-                        width = if (isFocused) 2.5.dp else 1.dp,
-                        color = if (isFocused) Color.White else Color(0x1FFFFFFF),
+                        width = if (isFocused) 3.dp else 1.dp,
+                        color = if (isFocused) FireOrangePrimary else Color(0x1FFFFFFF),
                         shape = CircleShape
                     )
                     .clip(CircleShape),
@@ -1635,7 +1843,7 @@ fun AppCircularHubCard(
 
         Text(
             text = appItem.name,
-            color = if (isFocused) Color.White else FireTextSecondary,
+            color = if (isFocused) FireOrangePrimary else FireTextSecondary,
             fontSize = 11.sp,
             fontWeight = if (isFocused) FontWeight.Bold else FontWeight.Normal,
             maxLines = 2,

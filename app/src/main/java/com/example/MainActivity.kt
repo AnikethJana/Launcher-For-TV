@@ -960,11 +960,14 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
         }
     }
 
-    // Filter applications dynamically
-    val filteredCurated = remember(searchQuery) {
-        CuratedApps.filter {
-            it.name.contains(searchQuery, ignoreCase = true) ||
-                    it.description.contains(searchQuery, ignoreCase = true)
+    // Filter applications dynamically to only show those actually installed on the device
+    val filteredCurated = remember(searchQuery, systemApps) {
+        val installedPackageNames = systemApps.map { it.packageName }.toSet()
+        CuratedApps.filter { curated ->
+            installedPackageNames.contains(curated.packageName) && (
+                curated.name.contains(searchQuery, ignoreCase = true) ||
+                curated.description.contains(searchQuery, ignoreCase = true)
+            )
         }
     }
 
@@ -986,8 +989,8 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
     }
 
     // Determine target fallback banner
-    val focusedBannerItem = remember(selectedApp, filteredCurated) {
-        selectedApp ?: filteredCurated.firstOrNull() ?: CuratedApps.first()
+    val focusedBannerItem = remember(selectedApp, filteredCurated, filteredSystem) {
+        selectedApp ?: filteredCurated.firstOrNull() ?: filteredSystem.firstOrNull() ?: CuratedApps.first()
     }
 
     Box(
@@ -1067,7 +1070,7 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
                 }
 
                 // UNIFIED FLAT GRID of all CURATED + INSTALLED apps (8 columns to perfectly fit TV screen width)
-                val allApps = (filteredCurated + filteredSystem).distinctBy { if (it.isSystem) it.packageName else it.id }
+                val allApps = (filteredCurated + filteredSystem).distinctBy { it.packageName }
                 val chunkedApps = allApps.chunked(8)
 
                 if (allApps.isEmpty()) {
@@ -1086,7 +1089,7 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             rowApps.forEach { app ->
-                                val isPinned = favorites.contains(if (app.isSystem) app.packageName else app.id)
+                                val isPinned = favorites.contains(app.packageName)
                                 AppCircularHubCard(
                                     appItem = app,
                                     isPinned = isPinned,
@@ -1668,7 +1671,7 @@ fun AppHorizontalGroup(
             modifier = Modifier.fillMaxWidth()
         ) {
             items(apps, key = { it.id }) { app ->
-                val isPinned = favorites.contains(if (app.isSystem) app.packageName else app.id)
+                val isPinned = favorites.contains(app.packageName)
 
                 AppCircularHubCard(
                     appItem = app,

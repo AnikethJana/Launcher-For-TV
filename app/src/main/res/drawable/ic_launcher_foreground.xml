@@ -4,24 +4,131 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    
-    <!-- Top-Left Square -->
-    <path
-        android:fillColor="#007AFF"
-        android:pathData="M34,27 h10 a7,7 0 0 1 7,7 v10 a7,7 0 0 1 -7,7 h-10 a7,7 0 0 1 -7,-7 v-10 a7,7 0 0 1 7,-7 z" />
 
-    <!-- Top-Right Square -->
+    <!-- Ambient Glow behind the logo -->
     <path
-        android:fillColor="#007AFF"
-        android:pathData="M64,27 h10 a7,7 0 0 1 7,7 v10 a7,7 0 0 1 -7,7 h-10 a7,7 0 0 1 -7,-7 v-10 a7,7 0 0 1 7,-7 z" />
+        android:pathData="M 54,54 m -24,0 a 24,24 0 1,1 48,0 a 24,24 0 1,1 -48,0"
+        android:fillColor="#151A24" />
 
-    <!-- Bottom-Left Square -->
+    <!-- Left side of the 'A' arch (Neon Blue Glow and Stroke) -->
+    <!-- Large Background Glow -->
     <path
-        android:fillColor="#007AFF"
-        android:pathData="M34,57 h10 a7,7 0 0 1 7,7 v10 a7,7 0 0 1 -7,7 h-10 a7,7 0 0 1 -7,-7 v-10 a7,7 0 0 1 7,-7 z" />
+        android:pathData="M 33,72 C 34,52 42,28 54,28"
+        android:strokeColor="#1E00E5FF"
+        android:strokeWidth="14"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M 33,72 C 34,52 42,28 54,28"
+        android:strokeColor="#5500E5FF"
+        android:strokeWidth="8"
+        android:strokeLineCap="round" />
+    <!-- Core Bright Stroke -->
+    <path
+        android:pathData="M 33,72 C 34,52 42,28 54,28"
+        android:strokeColor="#00E5FF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+    <!-- Core White Source -->
+    <path
+        android:pathData="M 33,72 C 34,52 42,28 54,28"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round" />
 
-    <!-- Bottom-Right Square -->
+    <!-- Right side of the 'A' arch (Neon Pink/Magenta Glow and Stroke) -->
+    <!-- Large Background Glow -->
     <path
-        android:fillColor="#007AFF"
-        android:pathData="M64,57 h10 a7,7 0 0 1 7,7 v10 a7,7 0 0 1 -7,7 h-10 a7,7 0 0 1 -7,-7 v-10 a7,7 0 0 1 7,-7 z" />
+        android:pathData="M 54,28 C 66,28 74,52 75,72"
+        android:strokeColor="#1EFF007F"
+        android:strokeWidth="14"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M 54,28 C 66,28 74,52 75,72"
+        android:strokeColor="#55FF007F"
+        android:strokeWidth="8"
+        android:strokeLineCap="round" />
+    <!-- Core Bright Stroke -->
+    <path
+        android:pathData="M 54,28 C 66,28 74,52 75,72"
+        android:strokeColor="#FF007F"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+    <!-- Core White Source -->
+    <path
+        android:pathData="M 54,28 C 66,28 74,52 75,72"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round" />
+
+    <!-- Diagonal Tilted Orbit Ring Group -->
+    <group
+        android:rotation="-18"
+        android:pivotX="54"
+        android:pivotY="52">
+
+        <!-- Back half of the ring (drawn behind front elements is hard, so we just use transparency for cosmic feel) -->
+        <path
+            android:pathData="M 16,52 a 38,9 0 1,0 76,0 a 38,9 0 1,0 -76,0"
+            android:strokeColor="#3300E5FF"
+            android:strokeWidth="7" />
+        <path
+            android:pathData="M 16,52 a 38,9 0 1,0 76,0 a 38,9 0 1,0 -76,0"
+            android:strokeColor="#AA00D2FF"
+            android:strokeWidth="2.5" />
+        <path
+            android:pathData="M 16,52 a 38,9 0 1,0 76,0 a 38,9 0 1,0 -76,0"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="1.0" />
+
+        <!-- Sphere planets on the Orbit Ring -->
+        <!-- Left Sphere -->
+        <path
+            android:pathData="M 24,52 m -3.5,0 a 3.5,3.5 0 1,1 7,0 a 3.5,3.5 0 1,1 -7,0"
+            android:fillColor="#00E5FF" />
+        <path
+            android:pathData="M 24,52 m -1.5,0 a 1.5,1.5 0 1,1 3,0 a 1.5,1.5 0 1,1 -3,0"
+            android:fillColor="#FFFFFF" />
+
+        <!-- Right Sphere -->
+        <path
+            android:pathData="M 84,52 m -3,0 a 3,3 0 1,1 6,0 a 3,3 0 1,1 -6,0"
+            android:fillColor="#FF007F" />
+        <path
+            android:pathData="M 84,52 m -1.2,0 a 1.2,1.2 0 1,1 2.4,0 a 1.2,1.2 0 1,1 -2.4,0"
+            android:fillColor="#FFFFFF" />
+    </group>
+
+    <!-- Star Sparkles (Vibrant 4-pointed stars) -->
+    <!-- Large Sparkle (Top Right) -->
+    <path
+        android:pathData="M 76,22 Q 76,28 82,28 Q 76,28 76,34 Q 76,28 70,28 Q 76,28 76,22"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M 76,22 Q 76,28 82,28 Q 76,28 76,34 Q 76,28 70,28 Q 76,28 76,22"
+        android:strokeColor="#4400E5FF"
+        android:strokeWidth="1.5" />
+
+    <!-- Medium Sparkle (Left) -->
+    <path
+        android:pathData="M 28,32 Q 28,37 33,37 Q 28,37 28,42 Q 28,37 23,37 Q 28,37 28,32"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M 28,32 Q 28,37 33,37 Q 28,37 28,42 Q 28,37 23,37 Q 28,37 28,32"
+        android:strokeColor="#44FF007F"
+        android:strokeWidth="1.2" />
+
+    <!-- Tiny sparkle background dots -->
+    <path
+        android:pathData="M 21,57 m -1,0 a 1,1 0 1,1 2,0 a 1,1 0 1,1 -2,0"
+        android:fillColor="#AA00E5FF" />
+    <path
+        android:pathData="M 84,39 m -1,0 a 1,1 0 1,1 2,0 a 1,1 0 1,1 -2,0"
+        android:fillColor="#AAFF007F" />
+    <path
+        android:pathData="M 45,21 m -0.7,0 a 0.7,0.7 0 1,1 1.4,0 a 0.7,0.7 0 1,1 -1.4,0"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M 68,17 m -0.7,0 a 0.7,0.7 0 1,1 1.4,0 a 0.7,0.7 0 1,1 -1.4,0"
+        android:fillColor="#FFFFFF" />
+
 </vector>

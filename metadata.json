@@ -1,0 +1,6 @@
+{
+  "name": "Fire Stick Apps+",
+  "description": "A sleek, Fire Stick-inspired apps list & hub showcasing installed apps and streaming shortcuts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

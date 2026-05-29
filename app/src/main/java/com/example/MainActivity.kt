@@ -20,6 +20,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.ui.input.key.*
+import android.view.KeyEvent
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -970,20 +972,13 @@ fun AdjustmentRow(
     }
 }
 
-// REMOTE FRIENDLY TV LAUNCHER APP MANAGEMENT AND SPATIAL REARRANGE OVERLAY
+// SLEEK, MODERN REMOTE-FRIENDLY OPTIONS OVERLAY (NO UGLY NAVIGATION BUTTONS)
 @Composable
-fun AppRearrangeOptionsDialog(
+fun AppOptionsDialog(
     appItem: AppItem,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
-    onMoveLeft: () -> Unit,
-    onMoveRight: () -> Unit,
-    onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit,
-    canMoveLeft: Boolean,
-    canMoveRight: Boolean,
-    canMoveUp: Boolean,
-    canMoveDown: Boolean,
+    onStartRearranging: () -> Unit,
     onClose: () -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -1007,7 +1002,7 @@ fun AppRearrangeOptionsDialog(
             colors = CardDefaults.cardColors(containerColor = Color(0xFF141A24)),
             border = BorderStroke(1.5.dp, FireOrangePrimary.copy(alpha = 0.6f)),
             modifier = Modifier
-                .widthIn(max = 420.dp)
+                .widthIn(max = 380.dp)
                 .fillMaxWidth()
                 .clickable(enabled = true, onClick = {}) // Intercept click inside card
         ) {
@@ -1016,7 +1011,7 @@ fun AppRearrangeOptionsDialog(
                     .fillMaxWidth()
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Header with app name
                 Row(
@@ -1041,7 +1036,7 @@ fun AppRearrangeOptionsDialog(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Rearrange & Favorites Options",
+                            text = "Launcher Options",
                             color = FireTextSecondary,
                             fontSize = 11.sp
                         )
@@ -1051,150 +1046,16 @@ fun AppRearrangeOptionsDialog(
                     }
                 }
 
-                HorizontalDivider(color = Color(0x22FFFFFF), thickness = 1.dp)
+                HorizontalDivider(color = Color(0x1BFFFFFF), thickness = 1.dp)
 
-                // The Spatial D-Pad Visualizer to Move App
-                Text(
-                    text = "REARRANGE POSITION",
-                    color = FireOrangePrimary,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                )
-
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // Up Button
-                    var isUpFocused by remember { mutableStateOf(false) }
-                    IconButton(
-                        onClick = onMoveUp,
-                        enabled = canMoveUp,
-                        modifier = Modifier
-                            .focusRequester(focusRequester) // Set focus to Up button initially
-                            .size(48.dp)
-                            .onFocusChanged { isUpFocused = it.isFocused }
-                            .background(
-                                color = if (isUpFocused) Color.White else if (canMoveUp) Color(0xFF1F2A38) else Color(0x11FFFFFF),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .border(
-                                width = if (isUpFocused) 2.dp else 1.dp,
-                                color = if (isUpFocused) Color.White else Color(0x22FFFFFF),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowUp,
-                            contentDescription = "Move Up",
-                            tint = if (!canMoveUp) Color.Gray else if (isUpFocused) Color.Black else Color.White
-                        )
-                    }
-
-                    // Middle Row: Left, App Mini-Preview, Right
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Left Button
-                        var isLeftFocused by remember { mutableStateOf(false) }
-                        IconButton(
-                            onClick = onMoveLeft,
-                            enabled = canMoveLeft,
-                            modifier = Modifier
-                                .size(48.dp)
-                                .onFocusChanged { isLeftFocused = it.isFocused }
-                                .background(
-                                    color = if (isLeftFocused) Color.White else if (canMoveLeft) Color(0xFF1F2A38) else Color(0x11FFFFFF),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .border(
-                                    width = if (isLeftFocused) 2.dp else 1.dp,
-                                    color = if (isLeftFocused) Color.White else Color(0x22FFFFFF),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowLeft,
-                                contentDescription = "Move Left",
-                                tint = if (!canMoveLeft) Color.Gray else if (isLeftFocused) Color.Black else Color.White
-                            )
-                        }
-
-                        // App mini icon in the center of directionals
-                        Box(
-                            modifier = Modifier
-                                .padding(horizontal = 24.dp)
-                                .size(56.dp)
-                                .background(Color(0xFF0C1015), CircleShape)
-                                .border(1.5.dp, FireOrangePrimary, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            AppIcon(app = appItem, modifier = Modifier.fillMaxSize())
-                        }
-
-                        // Right Button
-                        var isRightFocused by remember { mutableStateOf(false) }
-                        IconButton(
-                            onClick = onMoveRight,
-                            enabled = canMoveRight,
-                            modifier = Modifier
-                                .size(48.dp)
-                                .onFocusChanged { isRightFocused = it.isFocused }
-                                .background(
-                                    color = if (isRightFocused) Color.White else if (canMoveRight) Color(0xFF1F2A38) else Color(0x11FFFFFF),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .border(
-                                    width = if (isRightFocused) 2.dp else 1.dp,
-                                    color = if (isRightFocused) Color.White else Color(0x22FFFFFF),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowRight,
-                                contentDescription = "Move Right",
-                                tint = if (!canMoveRight) Color.Gray else if (isRightFocused) Color.Black else Color.White
-                            )
-                        }
-                    }
-
-                    // Down Button
-                    var isDownFocused by remember { mutableStateOf(false) }
-                    IconButton(
-                        onClick = onMoveDown,
-                        enabled = canMoveDown,
-                        modifier = Modifier
-                            .size(48.dp)
-                            .onFocusChanged { isDownFocused = it.isFocused }
-                            .background(
-                                color = if (isDownFocused) Color.White else if (canMoveDown) Color(0xFF1F2A38) else Color(0x11FFFFFF),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .border(
-                                width = if (isDownFocused) 2.dp else 1.dp,
-                                color = if (isDownFocused) Color.White else Color(0x22FFFFFF),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = "Move Down",
-                            tint = if (!canMoveDown) Color.Gray else if (isDownFocused) Color.Black else Color.White
-                        )
-                    }
-                }
-
-                HorizontalDivider(color = Color(0x11FFFFFF), thickness = 1.dp)
-
-                // Favorite Toggle & Exit Buttons Bottom Rows
+                // Option 1: Favorite Toggle Button
                 var isFavoriteFocused by remember { mutableStateOf(false) }
                 Button(
-                    onClick = onToggleFavorite,
+                    onClick = {
+                        onToggleFavorite()
+                    },
                     modifier = Modifier
+                        .focusRequester(focusRequester) // Set initial focus here
                         .fillMaxWidth()
                         .onFocusChanged { isFavoriteFocused = it.isFocused }
                         .border(
@@ -1203,7 +1064,7 @@ fun AppRearrangeOptionsDialog(
                             shape = RoundedCornerShape(100.dp)
                         ),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isFavoriteFocused) Color.White else if (isFavorite) Color(0xFF2C3E50) else Color(0xFFe74c3c),
+                        containerColor = if (isFavoriteFocused) Color.White else if (isFavorite) Color(0xFF2C3E50) else Color(0xFFE74C3C),
                         contentColor = if (isFavoriteFocused) Color.Black else Color.White
                     )
                 ) {
@@ -1217,6 +1078,37 @@ fun AppRearrangeOptionsDialog(
                     Text(text = label, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
 
+                // Option 2: Rearrange / Move Button
+                var isRearrangeFocused by remember { mutableStateOf(false) }
+                Button(
+                    onClick = {
+                        onStartRearranging()
+                        onClose()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { isRearrangeFocused = it.isFocused }
+                        .border(
+                            width = if (isRearrangeFocused) 2.dp else 0.dp,
+                            color = Color.White,
+                            shape = RoundedCornerShape(100.dp)
+                        ),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isRearrangeFocused) Color.White else Color(0xFF2E7D32),
+                        contentColor = if (isRearrangeFocused) Color.Black else Color.White
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Menu,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 8.dp).size(16.dp)
+                    )
+                    Text(text = "Move / Rearrange App", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                }
+
+                HorizontalDivider(color = Color(0x11FFFFFF), thickness = 1.dp)
+
+                // Done Button
                 var isDoneFocused by remember { mutableStateOf(false) }
                 Button(
                     onClick = onClose,
@@ -1233,7 +1125,7 @@ fun AppRearrangeOptionsDialog(
                         contentColor = Color.Black
                     )
                 ) {
-                    Text("Done / Exit Options", fontWeight = FontWeight.Black, fontSize = 13.sp)
+                    Text("Close Options", fontWeight = FontWeight.Black, fontSize = 13.sp)
                 }
             }
         }
@@ -1254,6 +1146,7 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
     var isDeveloperInfoOpen by remember { mutableStateOf(false) }
     var isCustomizerOpen by remember { mutableStateOf(false) }
     var appToEdit by remember { mutableStateOf<AppItem?>(null) }
+    var rearrangingApp by remember { mutableStateOf<AppItem?>(null) }
 
     // Direct app launching logic with 1-click fallback
     val launchAppDirectly = { app: AppItem ->
@@ -1277,6 +1170,11 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
 
     val allApps = filteredSystem
 
+    // FAVORITE APPS ROW (ONLY SHOWS IF NOT EMPTY, COOPERATES WITH REAL-TIME FACTION LISTS)
+    val favApps = remember(favorites, systemApps) {
+        systemApps.filter { favorites.contains(it.packageName) }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1289,7 +1187,7 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
             LazyColumn(
                 contentPadding = PaddingValues(
                     top = paddingValues.calculateTopPadding() + 20.dp,
-                    bottom = paddingValues.calculateBottomPadding() + 140.dp
+                    bottom = paddingValues.calculateBottomPadding() + 180.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxSize()
@@ -1324,7 +1222,7 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
                                 modifier = Modifier
                                     .size(36.dp)
                                     .onFocusChanged { isInfoFocused = it.isFocused }
-                                    .focusable(enabled = !isCustomizerOpen && !isDeveloperInfoOpen && appToEdit == null)
+                                    .focusable(enabled = !isCustomizerOpen && !isDeveloperInfoOpen && appToEdit == null && rearrangingApp == null)
                                     .border(
                                         width = if (isInfoFocused) 1.5.dp else 1.dp,
                                         color = if (isInfoFocused) Color.White else Color(0x1FFFFFFF),
@@ -1345,11 +1243,60 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
 
                             MinimalistTopClock(
                                 viewModel = viewModel,
-                                isFocusable = !isCustomizerOpen && !isDeveloperInfoOpen && appToEdit == null
+                                isFocusable = !isCustomizerOpen && !isDeveloperInfoOpen && appToEdit == null && rearrangingApp == null
                             ) {
                                 isCustomizerOpen = true
                             }
                         }
+                    }
+                }
+
+                if (favApps.isNotEmpty()) {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = "Favorite Apps",
+                                color = FireOrangePrimary,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.SansSerif
+                            )
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                items(favApps, key = { it.packageName }) { app ->
+                                    val isPinned = favorites.contains(app.packageName)
+                                    AppCircularHubCard(
+                                        appItem = app,
+                                        isPinned = isPinned,
+                                        onClick = { launchAppDirectly(app) },
+                                        onLongClick = { appToEdit = app },
+                                        isFocusable = !isCustomizerOpen && !isDeveloperInfoOpen && appToEdit == null && rearrangingApp == null,
+                                        rearrangingApp = rearrangingApp,
+                                        onMoveApp = { offset -> viewModel.moveApp(app.packageName, offset) },
+                                        onFinishRearranging = { rearrangingApp = null }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    item {
+                        Text(
+                            text = "All Apps",
+                            color = Color.White.copy(alpha = 0.8f),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.SansSerif,
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
+                        )
                     }
                 }
 
@@ -1378,9 +1325,56 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
                                     isPinned = isPinned,
                                     onClick = { launchAppDirectly(app) },
                                     onLongClick = { appToEdit = app },
-                                    isFocusable = !isCustomizerOpen && !isDeveloperInfoOpen && appToEdit == null
+                                    isFocusable = !isCustomizerOpen && !isDeveloperInfoOpen && appToEdit == null && (rearrangingApp == null || rearrangingApp?.packageName == app.packageName),
+                                    rearrangingApp = rearrangingApp,
+                                    onMoveApp = { offset -> viewModel.moveApp(app.packageName, offset) },
+                                    onFinishRearranging = { rearrangingApp = null }
                                 )
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        // FLOATING REARRANGE INSTRUCTION BANNER (REPLACES UGLY ON-SCREEN ARROWS)
+        if (rearrangingApp != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+                    .align(Alignment.BottomCenter)
+            ) {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFD84315)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                    border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.6f)),
+                    modifier = Modifier.align(Alignment.Center)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Column {
+                            Text(
+                                text = "MOVE MODE ACTIVE: ${rearrangingApp!!.name}",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                            Text(
+                                text = "Use TV remote navigation arrows (Up, Down, Left, Right) to rearrange this app, then press OK/Select or Back to exit.",
+                                color = Color.White.copy(alpha = 0.9f),
+                                fontSize = 11.sp
+                            )
                         }
                     }
                 }
@@ -1419,19 +1413,11 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
         if (appToEdit != null) {
             val app = appToEdit!!
             val isPinned = favorites.contains(app.packageName)
-            val idx = allApps.indexOfFirst { it.packageName == app.packageName }
-            AppRearrangeOptionsDialog(
+            AppOptionsDialog(
                 appItem = app,
                 isFavorite = isPinned,
                 onToggleFavorite = { viewModel.toggleFavorite(app.packageName) },
-                onMoveLeft = { viewModel.moveApp(app.packageName, -1) },
-                onMoveRight = { viewModel.moveApp(app.packageName, 1) },
-                onMoveUp = { viewModel.moveApp(app.packageName, -8) },
-                onMoveDown = { viewModel.moveApp(app.packageName, 8) },
-                canMoveLeft = idx > 0,
-                canMoveRight = idx != -1 && idx < allApps.size - 1,
-                canMoveUp = idx >= 8,
-                canMoveDown = idx != -1 && idx < allApps.size - 8,
+                onStartRearranging = { rearrangingApp = app },
                 onClose = { appToEdit = null }
             )
         }
@@ -1996,17 +1982,98 @@ fun AppCircularHubCard(
     isPinned: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit = {},
-    isFocusable: Boolean = true
+    isFocusable: Boolean = true,
+    rearrangingApp: AppItem? = null,
+    onMoveApp: (Int) -> Unit = {},
+    onFinishRearranging: () -> Unit = {}
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(targetValue = if (isFocused) 1.15f else 1.0f, animationSpec = spring())
-    val haloAlpha by animateFloatAsState(targetValue = if (isFocused) 0.5f else 0.0f)
+    val isRearranging = rearrangingApp?.packageName == appItem.packageName
+    val scale by animateFloatAsState(targetValue = if (isRearranging) 1.25f else if (isFocused) 1.15f else 1.0f, animationSpec = spring())
+    val haloAlpha by animateFloatAsState(targetValue = if (isRearranging) 0.8f else if (isFocused) 0.5f else 0.0f)
+
+    var dpadPressJob by remember { mutableStateOf<Job?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+    var isDpadLongPressTriggered by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .width(96.dp)
-            .onFocusChanged { isFocused = it.isFocused }
+            .onFocusChanged { 
+                isFocused = it.isFocused 
+                if (!it.isFocused) {
+                    dpadPressJob?.cancel()
+                    dpadPressJob = null
+                    isDpadLongPressTriggered = false
+                }
+            }
             .focusable(enabled = isFocusable)
+            .onKeyEvent { keyEvent ->
+                if (isRearranging) {
+                    if (keyEvent.type == KeyEventType.KeyDown) {
+                        when (keyEvent.nativeKeyEvent.keyCode) {
+                            KeyEvent.KEYCODE_DPAD_LEFT -> {
+                                onMoveApp(-1)
+                                true
+                            }
+                            KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                                onMoveApp(1)
+                                true
+                            }
+                            KeyEvent.KEYCODE_DPAD_UP -> {
+                                onMoveApp(-8)
+                                true
+                            }
+                            KeyEvent.KEYCODE_DPAD_DOWN -> {
+                                onMoveApp(8)
+                                true
+                            }
+                            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_BACK -> {
+                                onFinishRearranging()
+                                true
+                            }
+                            else -> false
+                        }
+                    } else {
+                        val code = keyEvent.nativeKeyEvent.keyCode
+                        code == KeyEvent.KEYCODE_DPAD_LEFT ||
+                        code == KeyEvent.KEYCODE_DPAD_RIGHT ||
+                        code == KeyEvent.KEYCODE_DPAD_UP ||
+                        code == KeyEvent.KEYCODE_DPAD_DOWN ||
+                        code == KeyEvent.KEYCODE_DPAD_CENTER ||
+                        code == KeyEvent.KEYCODE_ENTER ||
+                        code == KeyEvent.KEYCODE_BACK
+                    }
+                } else {
+                    val code = keyEvent.nativeKeyEvent.keyCode
+                    val isCenterKey = code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER
+                    if (isCenterKey && isFocusable) {
+                        if (keyEvent.type == KeyEventType.KeyDown) {
+                            if (dpadPressJob == null && !isDpadLongPressTriggered) {
+                                isDpadLongPressTriggered = false
+                                dpadPressJob = coroutineScope.launch {
+                                    delay(650)
+                                    isDpadLongPressTriggered = true
+                                    onLongClick()
+                                }
+                            }
+                            true
+                        } else if (keyEvent.type == KeyEventType.KeyUp) {
+                            dpadPressJob?.cancel()
+                            dpadPressJob = null
+                            if (!isDpadLongPressTriggered) {
+                                onClick()
+                            }
+                            isDpadLongPressTriggered = false
+                            true
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    }
+                }
+            }
             .combinedClickable(
                 enabled = isFocusable,
                 onClick = { onClick() },
@@ -2023,8 +2090,8 @@ fun AppCircularHubCard(
             contentAlignment = Alignment.Center
         ) {
             // Glow aura background matching the app's brandColor
-            if (isFocused || haloAlpha > 0f) {
-                val auraColor = appItem.brandColor
+            if (isRearranging || isFocused || haloAlpha > 0f) {
+                val auraColor = if (isRearranging) Color(0xFFFF5722) else appItem.brandColor
                 Box(
                     modifier = Modifier
                         .size(86.dp)
@@ -2042,12 +2109,12 @@ fun AppCircularHubCard(
                 modifier = Modifier
                     .size(68.dp)
                     .background(
-                        color = if (isFocused) Color(0xFF243042) else Color(0xFF141A24),
+                        color = if (isRearranging) Color(0xFF3E2723) else if (isFocused) Color(0xFF243042) else Color(0xFF141A24),
                         shape = CircleShape
                     )
                     .border(
-                        width = if (isFocused) 3.dp else 1.dp,
-                        color = if (isFocused) FireOrangePrimary else Color(0x1FFFFFFF),
+                        width = if (isRearranging) 4.dp else if (isFocused) 3.dp else 1.dp,
+                        color = if (isRearranging) Color(0xFFFF5722) else if (isFocused) FireOrangePrimary else Color(0x1FFFFFFF),
                         shape = CircleShape
                     )
                     .clip(CircleShape),
@@ -2075,6 +2142,22 @@ fun AppCircularHubCard(
                         )
                     }
                 }
+
+                if (isRearranging) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .background(Color(0xFFFF5722), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 5.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "MOVE",
+                            color = Color.White,
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
 
@@ -2082,9 +2165,9 @@ fun AppCircularHubCard(
 
         Text(
             text = appItem.name,
-            color = if (isFocused) FireOrangePrimary else FireTextSecondary,
+            color = if (isRearranging) Color(0xFFFF5722) else if (isFocused) FireOrangePrimary else FireTextSecondary,
             fontSize = 11.sp,
-            fontWeight = if (isFocused) FontWeight.Bold else FontWeight.Normal,
+            fontWeight = if (isRearranging || isFocused) FontWeight.Bold else FontWeight.Normal,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,

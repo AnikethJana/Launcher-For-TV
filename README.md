@@ -31,12 +31,11 @@ On **every push**, the workflow:
 4. Creates a GitHub Release and attaches the APK asset.
 
 ## Signing secrets required in GitHub
-Add these repository secrets:
+Create a GitHub Actions environment named `KEYSTORE` and add these secrets:
 - `KEYSTORE_PASSWORD`
 - `KEY_ALIAS`
 - `KEY_PASSWORD`
-- `KEYSTORE` (base64 encoded JKS)  
-  or `SIGNING_KEY` (base64 encoded JKS, fallback supported)
+- `SIGNING_KEY` (base64 encoded JKS)
 
 The workflow decodes the keystore and passes:
 - `KEYSTORE_PASSWORD`

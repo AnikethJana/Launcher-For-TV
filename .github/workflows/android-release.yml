@@ -9,11 +9,11 @@ permissions:
 jobs:
   test-build-release:
     runs-on: ubuntu-latest
+    environment: KEYSTORE
     env:
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
       KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
       KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      KEYSTORE_B64: ${{ secrets.KEYSTORE }}
       SIGNING_KEY_B64: ${{ secrets.SIGNING_KEY }}
     steps:
       - name: Checkout
@@ -30,11 +30,7 @@ jobs:
 
       - name: Decode signing key
         run: |
-          if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 --decode > key.jks
-          else
-            echo "$SIGNING_KEY_B64" | base64 --decode > key.jks
-          fi
+          echo "$SIGNING_KEY_B64" | base64 --decode > key.jks
           echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/key.jks" >> "$GITHUB_ENV"
           echo "KEYSTORE=$GITHUB_WORKSPACE/key.jks" >> "$GITHUB_ENV"
 

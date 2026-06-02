@@ -647,24 +647,13 @@ fun MinimalistTopClock(
             .padding(horizontal = 14.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.End
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.DateRange,
-                contentDescription = "Date and time",
-                tint = if (isFocused) Color.White else FireOrangePrimary,
-                modifier = Modifier.size(14.dp)
-            )
-            Text(
-                text = timeStr,
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Monospace
-            )
-        }
+        Text(
+            text = timeStr,
+            color = Color.White,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily.Monospace
+        )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = dateStr,

@@ -1163,9 +1163,13 @@ fun FireAppsDashboard(viewModel: FireAppsViewModel) {
     }
 
     val filteredSystem = remember(searchQuery, systemApps) {
-        systemApps.filter {
-            NativeStringMatcher.containsIgnoreCase(it.name, searchQuery) ||
-                    NativeStringMatcher.containsIgnoreCase(it.packageName, searchQuery)
+        if (searchQuery.isBlank()) {
+            systemApps
+        } else {
+            systemApps.filter {
+                NativeStringMatcher.containsIgnoreCase(it.name, searchQuery) ||
+                        NativeStringMatcher.containsIgnoreCase(it.packageName, searchQuery)
+            }
         }
     }
 
@@ -2265,7 +2269,8 @@ fun AppIcon(app: AppItem, modifier: Modifier = Modifier) {
     if (app.isSystem) {
         if (app.iconDrawable != null) {
             val resources = LocalContext.current.resources
-            val drawable = remember(app.iconDrawable, resources.configuration) {
+            val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+            val drawable = remember(app.iconDrawable, configuration) {
                 app.iconDrawable?.constantState?.newDrawable(resources)?.mutate() ?: app.iconDrawable
             }
             AndroidView(

@@ -117,28 +117,35 @@ class PerformanceBenchmarkTest {
                     "Utilities" -> listOf("CORE UTILITY", "SYSTEM RUNTIME")
                     else -> listOf("DEVICE SERVICE", "LOCAL SHORTCUT")
                 }
-                val description = when (detectedCategory) {
-                    "Games" -> "Immersive gameplay application installed on this device. Start playing with zero buffering."
-                    "Productivity" -> "Productivity workspace tool for managing documents, tasks, and notes on your cinematic driver."
-                    "Social" -> "Communicate, message, and stay connected with your social circles directly from your TV layout."
-                    "Entertainment" -> "High quality video, music, or media stream application. Cinema mode output fully supported."
-                    "Utilities" -> "System helper or core administration tool to keep your hardware running smoothly."
-                    else -> "Local system device application launch helper. Tap to open package directly."
-                }
-                val rating = when (detectedCategory) {
-                    "Games" -> "4.7 ⭐"
-                    "Productivity" -> "4.5 ⭐"
-                    "Social" -> "4.6 ⭐"
-                    "Entertainment" -> "4.8 ⭐"
-                    "Utilities" -> "4.4 ⭐"
-                    else -> "4.2 ⭐"
-                }
-
-                // Do something to prevent JIT from optimizing it away completely
-                if (specs.size > 10) println(description)
             }
         }
 
         println("Old approach time (object creation): $timeOld ms")
+
+        val specsGames = listOf("INTERACTIVE", "LOCAL GAME", "60 FPS")
+        val specsProductivity = listOf("WORKSPACE", "PRODUCTIVITY", "CLOUD DATA")
+        val specsSocial = listOf("SOCIAL", "MESSAGING", "COMMUNITY")
+        val specsEntertainment = listOf("CINEMATIC", "MEDIA FEED", "UHD/HD")
+        val specsUtilities = listOf("CORE UTILITY", "SYSTEM RUNTIME")
+        val specsOther = listOf("DEVICE SERVICE", "LOCAL SHORTCUT")
+
+        val timeNew = measureTimeMillis {
+            for (i in 0..10_000_000) {
+                val detectedCategory = categories[i % categories.size]
+                val specs = when (detectedCategory) {
+                    "Games" -> specsGames
+                    "Productivity" -> specsProductivity
+                    "Social" -> specsSocial
+                    "Entertainment" -> specsEntertainment
+                    "Utilities" -> specsUtilities
+                    else -> specsOther
+                }
+            }
+        }
+
+        println("--------------------------------------------------")
+        println("Baseline (listOf in loop): $timeOld ms")
+        println("Optimized (pre-allocated): $timeNew ms")
+        println("--------------------------------------------------")
     }
 }

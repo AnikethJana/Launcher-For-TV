@@ -2286,11 +2286,7 @@ fun AppIcon(app: AppItem, modifier: Modifier = Modifier) {
     if (app.isSystem) {
         if (app.iconDrawable != null) {
             val resources = LocalContext.current.resources
-
             val configuration = LocalConfiguration.current
-
-
-
             val drawable = remember(app.iconDrawable, configuration) {
                 app.iconDrawable?.constantState?.newDrawable(resources)?.mutate() ?: app.iconDrawable
             }
